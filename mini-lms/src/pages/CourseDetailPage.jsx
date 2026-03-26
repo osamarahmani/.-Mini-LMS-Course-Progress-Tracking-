@@ -22,6 +22,7 @@ function CourseDetailPage({ progress }) {
   // Flatten all lessons
   const allLessons = course.chapters.flatMap(ch => ch.lessons);
   const progressPct = getProgress(allLessons);
+  
 
   return (
     <div className="min-h-screen bg-gray-100">
