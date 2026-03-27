@@ -1,48 +1,61 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { fetchProgress, markLessonComplete } from '../api';
 
-function useProgress() {
+function useProgress(userId) {
+  const [completedLessons, setCompletedLessons] = useState([]);
 
-  // Load completed lesson IDs from localStorage on first render
-  const [completedLessons, setCompletedLessons] = useState(() => {
-    const stored = localStorage.getItem('completedLessons');
-    return stored ? JSON.parse(stored) : [];
+  // ✅ Load progress safely
+  useEffect(() => {
+  if (!userId) return;
+
+  fetchProgress(userId).then(data => {
+    setCompletedLessons(Array.isArray(data) ? data : []);
   });
+}, [userId]);
 
-  // Mark a lesson as complete
-  const markComplete = (lessonId) => {
-    if (completedLessons.includes(lessonId)) return; // already done
+  // ✅ Mark lesson complete
+  const markComplete = async (lessonId, courseId) => {
+    if (completedLessons.includes(lessonId)) return;
+
     const updated = [...completedLessons, lessonId];
     setCompletedLessons(updated);
-    localStorage.setItem('completedLessons', JSON.stringify(updated));
-  };
 
-  // Unmark a lesson (toggle)
-  const markIncomplete = (lessonId) => {
-    const updated = completedLessons.filter(id => id !== lessonId);
-    setCompletedLessons(updated);
-    localStorage.setItem('completedLessons', JSON.stringify(updated));
-  };
-
-  // Toggle complete/incomplete
-  const toggleLesson = (lessonId) => {
-    if (completedLessons.includes(lessonId)) {
-      markIncomplete(lessonId);
-    } else {
-      markComplete(lessonId);
+    try {
+      await markLessonComplete(userId, courseId, lessonId);
+    } catch (err) {
+      console.error("❌ markComplete error:", err);
     }
   };
 
-  // Calculate progress % for a list of lessons
+  // ✅ Toggle lesson
+  const toggleLesson = async (lessonId, courseId) => {
+    try {
+      if (completedLessons.includes(lessonId)) {
+        const updated = completedLessons.filter(id => id !== lessonId);
+        setCompletedLessons(updated);
+        await markLessonComplete(userId, courseId, lessonId);
+      } else {
+        await markComplete(lessonId, courseId);
+      }
+    } catch (err) {
+      console.error("❌ toggleLesson error:", err);
+    }
+  };
+
+  // ✅ Calculate progress safely
   const getProgress = (lessons) => {
-    if (lessons.length === 0) return 0;
-    const done = lessons.filter(l => completedLessons.includes(l.id)).length;
+    if (!Array.isArray(lessons) || lessons.length === 0) return 0;
+
+    const done = lessons.filter(l =>
+      completedLessons.includes(l._id)
+    ).length;
+
     return Math.round((done / lessons.length) * 100);
   };
 
   return {
     completedLessons,
     markComplete,
-    markIncomplete,
     toggleLesson,
     getProgress,
   };

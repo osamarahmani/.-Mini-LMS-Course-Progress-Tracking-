@@ -1,58 +1,60 @@
+const mongoose = require('mongoose');
 const Progress = require('../models/Progress');
 
-// GET /api/progress/:userId/:courseId — get progress for a course
-const getCourseProgress = async (req, res) => {
+// ✅ GET ALL PROGRESS
+const getAllProgress = async (req, res) => {
   try {
-    const { userId, courseId } = req.params;
-    const progress = await Progress.find({ userId, courseId });
-    res.json(progress);
+    const userId = new mongoose.Types.ObjectId(req.params.userId);
+
+    const progress = await Progress.find({ userId });
+
+    const completedLessons = progress
+      .filter(p => p.completed)
+      .map(p => p.lessonId.toString());
+
+    res.json(completedLessons);
+
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error(err);
+    res.json([]);
   }
 };
 
-// POST /api/progress — mark a lesson complete
+
+// ✅ MARK COMPLETE
 const markLessonComplete = async (req, res) => {
   try {
     const { userId, courseId, lessonId } = req.body;
 
-    // Find existing or create new progress record
-    let progress = await Progress.findOne({ userId, lessonId });
+    if (!userId || !lessonId || !courseId) {
+      return res.status(400).json({ message: "Missing data" });
+    }
+
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
+    let progress = await Progress.findOne({
+      userId: userObjectId,
+      lessonId: lessonId.toString(),
+    });
 
     if (progress) {
-      // Toggle complete/incomplete
       progress.completed = !progress.completed;
-      progress.completedAt = progress.completed ? new Date() : null;
       await progress.save();
     } else {
-      // Create new progress record
       progress = await Progress.create({
-        userId,
+        userId: userObjectId,
         courseId,
-        lessonId,
+        lessonId: lessonId.toString(),
         completed: true,
-        completedAt: new Date(),
       });
     }
 
     res.json(progress);
+
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error("POST ERROR:", err);
+    res.status(500).json({ message: err.message });
   }
 };
 
-// GET /api/progress/:userId — get all progress for a user
-const getAllProgress = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const progress = await Progress.find({ userId, completed: true });
-
-    // Return just the lessonIds array
-    const completedLessonIds = progress.map(p => p.lessonId);
-    res.json(completedLessonIds);
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
-};
-
-module.exports = { getCourseProgress, markLessonComplete, getAllProgress };
+module.exports = { getAllProgress, markLessonComplete };

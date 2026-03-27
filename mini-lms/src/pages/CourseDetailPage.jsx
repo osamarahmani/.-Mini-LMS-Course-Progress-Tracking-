@@ -1,16 +1,38 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { courses } from '../data/courses';
+import { useState, useEffect } from 'react';
+import { fetchCourseById } from '../api';
 import ChapterAccordion from '../components/ChapterAccordion';
+import useProgress from '../hooks/useProgress'; // ✅ ADD THIS
 
-function CourseDetailPage({ progress }) {
-  const { courseId } = useParams();
+function CourseDetailPage({ user }) { // ✅ receive user
+  const { id } = useParams(); // ✅ match route param
   const navigate = useNavigate();
-  const { completedLessons, toggleLesson, getProgress } = progress;
 
-  // Find course by ID
-  const course = courses.find(c => c.id === parseInt(courseId));
+  // ✅ FIX: get progress from hook
+  const progress = useProgress(user._id);
 
-  // Handle invalid course
+  const completedLessons = progress?.completedLessons || [];
+  const toggleLesson = progress?.toggleLesson;
+  const getProgress = progress?.getProgress || (() => 0);
+
+  const [course, setCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCourseById(id).then(data => {
+      setCourse(data);
+      setLoading(false);
+    });
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <p className="text-gray-500">Loading course...</p>
+      </div>
+    );
+  }
+
   if (!course) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -19,26 +41,18 @@ function CourseDetailPage({ progress }) {
     );
   }
 
-  // Flatten all lessons
   const allLessons = course.chapters.flatMap(ch => ch.lessons);
   const progressPct = getProgress(allLessons);
-  
 
   return (
     <div className="min-h-screen bg-gray-100">
-
-      {/* Header */}
       <div className="bg-white border-b border-gray-200 px-8 py-6">
-
-        {/* Back Button */}
         <button
           onClick={() => navigate('/')}
           className="text-sm text-blue-500 hover:underline mb-3 block"
         >
           ← Back to Courses
         </button>
-
-        {/* Course Title */}
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-gray-800">{course.title}</h1>
           <span className={`text-xs font-semibold px-3 py-1 rounded-full
@@ -48,16 +62,12 @@ function CourseDetailPage({ progress }) {
             {course.level}
           </span>
         </div>
-
-        {/* Description */}
         <p className="text-gray-500 text-sm mt-1">{course.description}</p>
-
-        {/* Progress Section */}
         <div className="mt-4 max-w-lg">
           <div className="flex justify-between text-sm text-gray-500 mb-1">
             <span>
               {completedLessons.filter(id =>
-                allLessons.map(l => l.id).includes(id)
+                allLessons.map(l => l._id).includes(id)
               ).length} of {allLessons.length} lessons complete
             </span>
             <span className="font-medium text-blue-600">{progressPct}%</span>
@@ -69,17 +79,13 @@ function CourseDetailPage({ progress }) {
             />
           </div>
         </div>
-
-        {/* Stats Row */}
         <div className="flex gap-6 mt-4 text-sm text-gray-400">
           <span>{course.chapters.length} chapters</span>
           <span>{allLessons.length} lessons</span>
           <span>{allLessons.filter(l => l.type === 'quiz').length} quizzes</span>
         </div>
-
       </div>
 
-      {/* Chapters */}
       <div className="p-8 max-w-3xl mx-auto">
         {progressPct === 100 && (
           <div className="mb-6 bg-green-50 border border-green-200 rounded-xl px-5 py-4 text-green-700 font-medium text-sm">
@@ -88,14 +94,14 @@ function CourseDetailPage({ progress }) {
         )}
         {course.chapters.map(chapter => (
           <ChapterAccordion
-            key={chapter.id}
-            chapter={chapter}
-            completedLessons={completedLessons}
-            toggleLesson={toggleLesson}
-          />
+  key={chapter._id}
+  chapter={chapter}
+  completedLessons={completedLessons}
+  toggleLesson={toggleLesson}
+  courseId={course._id} // ✅ ADD
+/>
         ))}
       </div>
-
     </div>
   );
 }

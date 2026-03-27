@@ -1,13 +1,19 @@
 const express = require('express');
 const router = express.Router();
+
 const {
+  getAllProgress,
   getCourseProgress,
   markLessonComplete,
-  getAllProgress,
 } = require('../controllers/progressController');
 
-router.get('/:userId',              getAllProgress);
-router.get('/:userId/:courseId',    getCourseProgress);
-router.post('/',                    markLessonComplete);
+// ✅ Get all progress for a user
+router.get('/:userId', getAllProgress);
+
+// ✅ Get course-specific progress
+router.get('/:userId/:courseId', getCourseProgress);
+
+// ✅ Mark lesson complete
+router.post('/', markLessonComplete);
 
 module.exports = router;
