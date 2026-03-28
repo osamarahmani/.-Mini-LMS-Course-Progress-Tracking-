@@ -5,6 +5,8 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import LessonViewPage from "./pages/LessonViewPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import UserProfilePage from "./pages/UserProfilePage";
+import AdminPanel from "./pages/AdminPanel";
 import { useState } from "react";
 
 function App() {
@@ -38,6 +40,11 @@ function App() {
         path="/lesson/:lessonId" 
         element={<LessonViewPage user={user} setUser={setUser} />} 
       />
+      <Route 
+        path="/profile" 
+        element={<UserProfilePage user={user} setUser={setUser} />} 
+      />
+      <Route path="/admin" element={<AdminPanel user={user} setUser={setUser} />} />
 
       <Route path="*" element={<NotFoundPage />} /> {/* ✅ FIX COMMENT */}
     </Routes>

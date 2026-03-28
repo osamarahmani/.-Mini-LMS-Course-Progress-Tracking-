@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { verifyAdmin } = require('../middleware/authMiddleware'); // ✅ Import guard
 const {
   getAllCourses,
   getCourseById,
@@ -7,9 +8,12 @@ const {
   deleteCourse,
 } = require('../controllers/courseController');
 
-router.get('/',      getAllCourses);
-router.get('/:id',   getCourseById);
-router.post('/',     createCourse);
-router.delete('/:id',deleteCourse);
+// Public routes (Students & Admins)
+router.get('/', getAllCourses);
+router.get('/:id', getCourseById);
+
+// 🔒 Protected routes (Only Admins)
+router.post('/', verifyAdmin, createCourse); 
+router.delete('/:id', verifyAdmin, deleteCourse);
 
 module.exports = router;

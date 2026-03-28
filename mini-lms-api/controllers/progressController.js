@@ -57,4 +57,4 @@ const markLessonComplete = async (req, res) => {
   }
 };
 
-module.exports = { getAllProgress, markLessonComplete };
+module.exports = { getAllProgress, markLessonComplete};

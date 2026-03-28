@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { fetchCourses } from '../api';
 import CourseCard from '../components/CourseCard';
-import Navbar from '../components/Navbar'; // ✅ ADD
-import useProgress from '../hooks/useProgress'; // ✅ ADD
+import Navbar from '../components/Navbar';
+import useProgress from '../hooks/useProgress';
 
-function CourseListPage({ user, setUser }) { // ✅ FIX props
+function CourseListPage({ user, setUser }) {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ FIX: get progress properly
   const progress = useProgress(user._id);
-
   const completedLessons = progress?.completedLessons || [];
   const getProgress = progress?.getProgress || (() => 0);
 
@@ -29,96 +27,128 @@ function CourseListPage({ user, setUser }) { // ✅ FIX props
   const allLessons = courses.flatMap(c =>
     (c.chapters || []).flatMap(ch => ch.lessons || [])
   );
-
   const totalLessons = allLessons.length;
-
   const totalCompleted = completedLessons.filter(id =>
     allLessons.some(l => l._id === id)
   ).length;
-
   const overallPct =
-    totalLessons > 0
-      ? Math.round((totalCompleted / totalLessons) * 100)
-      : 0;
-
+    totalLessons > 0 ? Math.round((totalCompleted / totalLessons) * 100) : 0;
   const completedCourses = courses.filter(course => {
     const lessons = (course.chapters || []).flatMap(ch => ch.lessons || []);
     return getProgress(lessons) === 100;
   }).length;
 
+  // ── Loading State ──────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <p className="text-gray-500">Loading courses...</p>
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-4 border-amber-200 border-t-amber-500 animate-spin" />
+          <p className="text-stone-400 text-sm tracking-wide font-medium">
+            Loading courses...
+          </p>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-100">
+  const stats = [
+    {
+      value: courses.length,
+      label: 'Total Courses',
+      icon: '📚',
+      color: 'text-stone-700',
+      bg: 'bg-stone-50',
+      border: 'border-stone-200',
+    },
+    {
+      value: completedCourses,
+      label: 'Completed',
+      icon: '🏆',
+      color: 'text-amber-600',
+      bg: 'bg-amber-50',
+      border: 'border-amber-200',
+    },
+    {
+      value: `${totalCompleted}/${totalLessons}`,
+      label: 'Lessons Done',
+      icon: '🎬',
+      color: 'text-sky-600',
+      bg: 'bg-sky-50',
+      border: 'border-sky-200',
+    },
+    {
+      value: `${overallPct}%`,
+      label: 'Overall Progress',
+      icon: '📈',
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50',
+      border: 'border-emerald-200',
+      progress: overallPct,
+    },
+  ];
 
-      {/* ✅ ADD NAVBAR */}
+  return (
+    <div className="min-h-screen bg-stone-50">
       <Navbar user={user} setUser={setUser} />
 
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <h1 className="text-2xl font-bold text-gray-800">My Courses</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Keep learning. You are doing great!
-        </p>
-      </div>
-
-      <div className="p-8 max-w-6xl mx-auto">
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl border p-4">
-            <p className="text-2xl font-bold">{courses.length}</p>
-            <p className="text-xs text-gray-400">Total Courses</p>
-          </div>
-
-          <div className="bg-white rounded-xl border p-4">
-            <p className="text-2xl font-bold text-blue-500">
-              {completedCourses}
-            </p>
-            <p className="text-xs text-gray-400">Completed</p>
-          </div>
-
-          <div className="bg-white rounded-xl border p-4">
-            <p className="text-2xl font-bold">
-              {totalCompleted}/{totalLessons}
-            </p>
-            <p className="text-xs text-gray-400">Lessons Done</p>
-          </div>
-
-          <div className="bg-white rounded-xl border p-4">
-            <p className="text-2xl font-bold text-green-500">
-              {overallPct}%
-            </p>
-            <p className="text-xs text-gray-400">Overall Progress</p>
-
-            <div className="mt-2 bg-gray-100 rounded-full h-1.5">
-              <div
-                className="bg-green-500 h-1.5 rounded-full"
-                style={{ width: `${overallPct}%` }}
-              />
-            </div>
-          </div>
+      {/* ── Page Header ─────────────────────────────────────────── */}
+      <header className="bg-white border-b border-stone-200 shadow-sm">
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          <h1 className="text-3xl font-bold text-stone-800 tracking-tight">
+            My Courses
+          </h1>
+          <p className="text-stone-400 text-sm mt-1">
+            Keep learning — you're doing great!
+          </p>
         </div>
+      </header>
 
-        {/* Courses */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courses.map(course => (
-            <CourseCard
-              key={course._id}
-              course={course}
-              progress={{
-                completedLessons,
-                getProgress
-              }}
-            />
+      <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+
+        {/* ── Stats Grid ────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {stats.map(({ value, label, icon, color, bg, border, progress: prog }) => (
+            <div
+              key={label}
+              className={`${bg} border ${border} rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xl">{icon}</span>
+              </div>
+              <p className={`text-2xl font-bold ${color} leading-none`}>{value}</p>
+              <p className="text-xs text-stone-400 font-medium mt-1">{label}</p>
+              {prog !== undefined && (
+                <div className="mt-3 bg-stone-200 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-emerald-400 to-emerald-500 h-1.5 rounded-full transition-all duration-700 ease-out"
+                    style={{ width: `${prog}%` }}
+                  />
+                </div>
+              )}
+            </div>
           ))}
         </div>
-      </div>
+
+        {/* ── Course Grid ───────────────────────────────────────── */}
+        {courses.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <span className="text-5xl">🎒</span>
+            <p className="text-stone-500 font-medium">No courses available yet.</p>
+            <p className="text-stone-400 text-sm">Check back later!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {courses.map(course => (
+              <CourseCard
+                key={course._id}
+                course={course}
+                progress={{ completedLessons, getProgress }}
+              />
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }

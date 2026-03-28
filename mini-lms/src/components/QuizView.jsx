@@ -17,68 +17,102 @@ function QuizView({ quiz, lessonId, courseId, isCompleted, markComplete }) {
     setSubmitted(false);
   };
 
+  const getOptionStyle = (index) => {
+    if (!submitted) {
+      return selected === index
+        ? 'border-amber-400 bg-amber-50 text-amber-800 ring-2 ring-amber-100'
+        : 'border-stone-200 text-stone-600 hover:border-amber-300 hover:bg-amber-50/50';
+    }
+    if (index === quiz.correct)
+      return 'border-emerald-400 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-100';
+    if (index === selected && !isCorrect)
+      return 'border-red-400 bg-red-50 text-red-700 ring-2 ring-red-100';
+    return 'border-stone-100 text-stone-300 cursor-default';
+  };
+
+  const getRadioStyle = (index) => {
+    if (!submitted) {
+      return selected === index
+        ? 'border-amber-500 bg-amber-500'
+        : 'border-stone-300';
+    }
+    if (index === quiz.correct) return 'border-emerald-500 bg-emerald-500';
+    if (index === selected && !isCorrect) return 'border-red-400 bg-red-400';
+    return 'border-stone-200';
+  };
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="bg-amber-50 border-b border-amber-100 px-6 py-4">
-        <h3 className="text-sm font-semibold text-amber-700">Quiz</h3>
-      </div>
-      <div className="p-6">
-        <p className="text-gray-800 font-medium mb-5">{quiz.question}</p>
-        <div className="flex flex-col gap-3">
-          {quiz.options.map((option, index) => {
-            let style = "border-gray-200 text-gray-700 hover:border-blue-400 hover:bg-blue-50";
-            if (submitted) {
-              if (index === quiz.correct) style = "border-green-400 bg-green-50 text-green-700";
-              else if (index === selected && !isCorrect) style = "border-red-400 bg-red-50 text-red-700";
-              else style = "border-gray-200 text-gray-400";
-            } else if (selected === index) {
-              style = "border-blue-400 bg-blue-50 text-blue-700";
-            }
-            return (
-              <div
-                key={index}
-                onClick={() => !submitted && setSelected(index)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-all ${style}`}
-              >
-                <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0
-                  ${selected === index ? 'border-blue-500 bg-blue-500' : 'border-gray-300'}`}
-                />
-                <span className="text-sm">{option}</span>
-              </div>
-            );
-          })}
-        </div>
-        {submitted && (
-          <div className={`mt-4 px-4 py-3 rounded-lg text-sm font-medium
-            ${isCorrect ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-            {isCorrect ? '🎉 Correct! Lesson marked as complete.' : '❌ Incorrect. Try again.'}
+    <div className="space-y-5">
+
+      {/* Question */}
+      <p className="text-stone-800 font-semibold text-base leading-relaxed">
+        {quiz.question}
+      </p>
+
+      {/* Options */}
+      <div className="flex flex-col gap-3">
+        {quiz.options.map((option, index) => (
+          <div
+            key={index}
+            onClick={() => !submitted && setSelected(index)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-150 ${getOptionStyle(index)}`}
+          >
+            {/* Radio dot */}
+            <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 transition-all duration-150 ${getRadioStyle(index)}`} />
+            <span className="text-sm font-medium">{option}</span>
+
+            {/* Result icon */}
+            {submitted && index === quiz.correct && (
+              <span className="ml-auto text-emerald-500 text-sm">✓</span>
+            )}
+            {submitted && index === selected && !isCorrect && index !== quiz.correct && (
+              <span className="ml-auto text-red-400 text-sm">✗</span>
+            )}
           </div>
-        )}
-        {isCompleted && !submitted && (
-          <div className="mt-4 px-4 py-3 rounded-lg bg-green-50 text-green-700 text-sm font-medium">
-            ✓ You already passed this quiz.
-          </div>
-        )}
-        <div className="mt-5 flex gap-3">
-          {!submitted && (
-            <button
-              onClick={handleSubmit}
-              disabled={selected === null}
-              className="bg-blue-500 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-6 py-2 rounded-lg transition-colors"
-            >
-              Submit Answer
-            </button>
-          )}
-          {submitted && !isCorrect && (
-            <button
-              onClick={handleRetry}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-6 py-2 rounded-lg transition-colors"
-            >
-              Try Again
-            </button>
-          )}
-        </div>
+        ))}
       </div>
+
+      {/* Feedback Banner */}
+      {submitted && (
+        <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium ${
+          isCorrect
+            ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+            : 'bg-red-50 border border-red-200 text-red-600'
+        }`}>
+          <span>{isCorrect ? '🎉' : '❌'}</span>
+          <span>{isCorrect ? 'Correct! Lesson marked as complete.' : 'Incorrect. Give it another try!'}</span>
+        </div>
+      )}
+
+      {/* Already Passed Banner */}
+      {isCompleted && !submitted && (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium">
+          <span>✓</span>
+          <span>You already passed this quiz.</span>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="flex gap-3 pt-1">
+        {!submitted && (
+          <button
+            onClick={handleSubmit}
+            disabled={selected === null}
+            className="bg-amber-500 hover:bg-amber-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold px-6 py-2.5 rounded-xl shadow-sm transition-all duration-200"
+          >
+            Submit Answer
+          </button>
+        )}
+        {submitted && !isCorrect && (
+          <button
+            onClick={handleRetry}
+            className="bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-600 text-sm font-semibold px-6 py-2.5 rounded-xl transition-all duration-200"
+          >
+            Try Again
+          </button>
+        )}
+      </div>
+
     </div>
   );
 }
