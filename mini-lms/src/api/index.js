@@ -1,5 +1,5 @@
-// const BASE_URL = "https://mini-lms-course-progress-tracking-api.onrender.com";
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = "https://mini-lms-course-progress-tracking-api.onrender.com";
+//const BASE_URL = "http://localhost:5000";
 
 // ── Helpers ──────────────────────────────────────────────────────
 const getStoredUser = () => JSON.parse(localStorage.getItem("user"));
