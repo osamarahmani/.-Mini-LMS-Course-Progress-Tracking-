@@ -6,44 +6,57 @@ function useProgress(userId) {
 
   // ✅ Load progress safely
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setCompletedLessons([]);
+      return;
+    }
     fetchProgress(userId).then(data => {
+      // Ensure we are only storing IDs
       setCompletedLessons(Array.isArray(data) ? data : []);
     });
   }, [userId]);
 
-  // ✅ Updated: Mark lesson complete (Now accepts optional gradeData)
+  // ✅ Mark lesson complete (Now accepts optional gradeData)
   const markComplete = async (lessonId, courseId, gradeData = null) => {
+    // If it's already done, don't trigger again
     if (completedLessons.includes(lessonId)) return;
 
-    // Optimistic Update: Update UI immediately
-    const updated = [...completedLessons, lessonId];
-    setCompletedLessons(updated);
+    // Optimistic Update
+    setCompletedLessons(prev => [...prev, lessonId]);
 
     try {
-      // 🎯 Now passing gradeData to the API call
       await markLessonComplete(userId, courseId, lessonId, gradeData);
     } catch (err) {
       console.error("❌ markComplete error:", err);
-      // Rollback UI if the server fails
+      // Rollback on failure
       setCompletedLessons(prev => prev.filter(id => id !== lessonId));
     }
   };
 
-  // ✅ Toggle lesson
+  // ✅ Toggle lesson (Fixed Logic)
   const toggleLesson = async (lessonId, courseId) => {
+    const isCurrentlyDone = completedLessons.includes(lessonId);
+    
+    // 1. Update UI Optimistically
+    if (isCurrentlyDone) {
+      setCompletedLessons(prev => prev.filter(id => id !== lessonId));
+    } else {
+      setCompletedLessons(prev => [...prev, lessonId]);
+    }
+
     try {
-      if (completedLessons.includes(lessonId)) {
-        const updated = completedLessons.filter(id => id !== lessonId);
-        setCompletedLessons(updated);
-        // If un-toggling, we don't usually send grades, just sync the completion
-        await markLessonComplete(userId, courseId, lessonId);
-      } else {
-        // Default to no gradeData for simple reading lessons
-        await markComplete(lessonId, courseId);
-      }
+      // 2. Sync with Backend
+      // NOTE: If your backend doesn't support "un-marking", 
+      // you might need a separate deleteProgress API call here.
+      await markLessonComplete(userId, courseId, lessonId, null); 
     } catch (err) {
       console.error("❌ toggleLesson error:", err);
+      // Rollback UI to previous state on error
+      if (isCurrentlyDone) {
+        setCompletedLessons(prev => [...prev, lessonId]);
+      } else {
+        setCompletedLessons(prev => prev.filter(id => id !== lessonId));
+      }
     }
   };
 
@@ -51,9 +64,8 @@ function useProgress(userId) {
   const getProgress = (lessons) => {
     if (!Array.isArray(lessons) || lessons.length === 0) return 0;
 
-    const done = lessons.filter(l =>
-      completedLessons.includes(l._id)
-    ).length;
+    const lessonIds = lessons.map(l => l._id);
+    const done = lessonIds.filter(id => completedLessons.includes(id)).length;
 
     return Math.round((done / lessons.length) * 100);
   };

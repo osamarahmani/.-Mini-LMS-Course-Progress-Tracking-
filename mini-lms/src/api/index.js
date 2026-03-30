@@ -1,4 +1,4 @@
-//const BASE_URL = "https://mini-lms-course-progress-tracking-api.onrender.com";
+// const BASE_URL = "https://mini-lms-course-progress-tracking-api.onrender.com";
 const BASE_URL = "http://localhost:5000";
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -31,6 +31,46 @@ export const register = async (data) => {
   return res.json();
 };
 
+// ══ PASSWORD RECOVERY ════════════════════════════════════════════
+
+/**
+ * Sends a reset link or verifies user email
+ */
+export const requestPasswordReset = async (email) => {
+  const res = await fetch(`${BASE_URL}/api/users/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  // 🎯 FIX: Manually check if the response was successful (200-299)
+  if (!res.ok) {
+    const errorData = await res.json();
+    // This 'throw' sends the error message to the .catch() block in your UI
+    throw new Error(errorData.message || "User not found");
+  }
+
+  return res.json();
+};
+
+/**
+ * Updates the password in the database
+ */
+export const resetPassword = async (token, newPassword) => {
+  const res = await fetch(`${BASE_URL}/api/users/reset-password/${token}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: newPassword }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to update password");
+  }
+
+  return res.json();
+};
+
 // ══ COURSES (STUDENT & ADMIN) ════════════════════════════════════
 export const fetchCourses = async () => {
   const res = await fetch(`${BASE_URL}/api/courses`);
@@ -44,10 +84,8 @@ export const fetchCourseById = async (courseId) => {
 
 // ══ PROGRESS & GRADING TRACKING ═══════════════════════════════════
 
-// ✅ Fetch progress for a specific user
 export const fetchProgress = async (userId) => {
   try {
-    // Note: Updated path to /api/users/progress to match your new routes
     const res = await fetch(`${BASE_URL}/api/users/progress/${userId}`);
     const data = await res.json();
     return Array.isArray(data) ? data : [];
@@ -56,7 +94,6 @@ export const fetchProgress = async (userId) => {
   }
 };
 
-// ✅ Updated: Mark lesson complete + Send Grade Data 🚀
 export const markLessonComplete = async (userId, courseId, lessonId, gradeData = null) => {
   try {
     const res = await fetch(`${BASE_URL}/api/users/progress`, {
@@ -66,7 +103,7 @@ export const markLessonComplete = async (userId, courseId, lessonId, gradeData =
         userId, 
         courseId, 
         lessonId, 
-        gradeData // 🎯 This passes the score to the backend for the dashboard
+        gradeData 
       }),
     });
     return res.json();

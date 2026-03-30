@@ -10,8 +10,17 @@ const userSchema = new mongoose.Schema({
     default: 'student' 
   },
   
-  // ── 📊 NEW: Quiz Grades Array ──────────────────────────────
-  // Stores the performance history for every quiz attempt
+  // ── 🔑 Password Recovery ────────────────────────────────────
+  resetToken: { 
+    type: String, 
+    default: null 
+  },
+  resetTokenExpiry: { 
+    type: Date, 
+    default: null 
+  },
+
+  // ── 📊 Quiz Grades Array ────────────────────────────────────
   quizGrades: [{
     lessonId: { 
       type: mongoose.Schema.Types.ObjectId, 
@@ -28,7 +37,6 @@ const userSchema = new mongoose.Schema({
   }],
 
   // ── 🎓 Progress Tracking ────────────────────────────────────
-  // Keeps track of which lesson IDs the user has finished
   completedLessons: [{ 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'Lesson' 

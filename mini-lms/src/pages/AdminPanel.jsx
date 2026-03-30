@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Sidebar from '../components/Sidebar'; // ⬅️ Integrated the new Sidebar
 import {
   fetchCourses,
   createCourse,
@@ -11,7 +12,7 @@ import {
   deleteLesson,
 } from '../api';
 
-// ── Internal Admin Components (Isolated) ────────────────────────
+// ── Internal Admin Components ────────────────────────
 const Field = ({ label, value, onChange, type = 'text', placeholder, textarea }) => (
   <div className="mb-4">
     <label className="block text-[10px] font-black text-stone-500 uppercase tracking-[0.2em] mb-2">{label}</label>
@@ -38,7 +39,6 @@ const Modal = ({ title, onClose, children }) => (
   </div>
 );
 
-// ── Main Admin Panel ─────────────────────────────────────────────
 export default function AdminPanel({ user }) {
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
@@ -97,47 +97,15 @@ export default function AdminPanel({ user }) {
   return (
     <div className="min-h-screen bg-stone-950 text-white flex font-sans">
       
-      {/* ── CUSTOM ADMIN SIDEBAR (No Student Links) ── */}
-      <aside className="w-72 bg-stone-900 border-r border-stone-800 flex flex-col py-10 px-6 flex-shrink-0 sticky top-0 h-screen">
-        <div className="flex items-center gap-4 mb-12 px-2">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500 flex items-center justify-center shadow-2xl shadow-amber-500/20">
-            <span className="text-2xl">⚡</span>
-          </div>
-          <div>
-            <p className="text-white font-black text-lg leading-none tracking-tighter italic">LMS PRO</p>
-            <p className="text-stone-500 text-[10px] font-black mt-1 uppercase tracking-widest">Admin Control</p>
-          </div>
-        </div>
+      {/* ── SHARED ADMIN SIDEBAR ────────────────────────────────── */}
+      <Sidebar activePage="courses" /> 
 
-        <nav className="space-y-3 flex-1">
-          <button className="w-full flex items-center gap-4 px-5 py-4 bg-amber-500 text-stone-950 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-amber-500/10">
-            <span>📚</span> Course Manager
-          </button>
-          <button 
-            onClick={() => navigate('/admin/roster')} // Ensure this route is set in App.jsx
-            className="w-full flex items-center gap-4 px-5 py-4 text-stone-500 hover:text-white hover:bg-stone-800/50 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
-          >
-          <span>👥</span> Student Roster
-          </button>
-          <button className="w-full flex items-center gap-4 px-5 py-4 text-stone-500 hover:text-white hover:bg-stone-800/50 rounded-2xl text-xs font-black uppercase tracking-widest transition-all">
-            <span>📊</span> System Logs
-          </button>
-        </nav>
-
-        <button
-          onClick={() => navigate('/')}
-          className="mt-auto flex items-center justify-center gap-3 px-5 py-4 border-2 border-stone-800 text-stone-500 hover:text-amber-500 hover:border-amber-500/50 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
-        >
-          <span>🏠</span> Exit to Website
-        </button>
-      </aside>
-
-      {/* ── MAIN MANAGEMENT AREA ── */}
+      {/* ── MAIN MANAGEMENT AREA ────────────────────────────────── */}
       <main className="flex-1 overflow-auto">
         <header className="px-10 py-10 flex justify-between items-center sticky top-0 bg-stone-950/90 backdrop-blur-xl z-10 border-b border-stone-900">
           <div>
-            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">Content Engine</h1>
-            <p className="text-stone-500 text-sm font-bold mt-1">Manage your courses, chapters, and quizzes from one place.</p>
+            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Content Engine</h1>
+            <p className="text-stone-500 text-[10px] font-black mt-2 uppercase tracking-widest">Version 2.0 • Course Lifecycle Management</p>
           </div>
           <button 
             onClick={() => setModal('addCourse')}
@@ -221,7 +189,6 @@ export default function AdminPanel({ user }) {
       </main>
 
       {/* ── MODALS (Course, Chapter, Lesson) ── */}
-      {/* ... keeping the modal logic the same but with the high-end styling ... */}
       {modal === 'addCourse' && (
         <Modal title="New Course" onClose={closeModal}>
           <Field label="Course Title" value={courseForm.title} onChange={e => setCourseForm({...courseForm, title: e.target.value})} placeholder="e.g., REACT ADVANCED" />

@@ -7,12 +7,22 @@ const {
   registerUser, 
   loginUser, 
   updateProgress, 
-  getProgress 
+  getProgress,
+  // 🎯 Make sure these are added to your userController.js!
+  forgotPassword, 
+  resetPassword 
 } = require('../controllers/userController');
 
-// ── 🔐 Auth Routes ─────────────────────────────────────────────
+// ── 🔐 Authentication Routes ───────────────────────────────────
 router.post('/register', registerUser);
 router.post('/login', loginUser);
+
+// 🆕 Password Recovery Routes
+// URL: /api/users/forgot-password
+router.post('/forgot-password', forgotPassword);
+
+// URL: /api/users/reset-password/:token
+router.post('/reset-password/:token', resetPassword);
 
 // ── 📈 Progress & Grading Routes ───────────────────────────────
 // POST: Save a lesson completion and/or a quiz grade
@@ -29,6 +39,7 @@ router.get('/', async (req, res) => {
       return res.status(403).json({ message: "Access Denied." });
     }
 
+    // Returns all users except their passwords
     const users = await User.find({}).select('-password').sort({ createdAt: -1 });
     res.status(200).json(users);
   } catch (error) {
